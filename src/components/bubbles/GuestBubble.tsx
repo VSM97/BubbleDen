@@ -38,7 +38,7 @@ export const GuestBubble = (props: Props) => {
       const src = (item.data as string) ?? fileData;
       return (
         <div class="flex items-center justify-center max-w-[128px] mr-[10px] p-0 m-0">
-          <img class="w-full h-full bg-cover" src={src} />
+          <img class="w-full h-full bg-cover" src={src} alt={`Preview of ${item.name}`} />
         </div>
       );
     } else if (item?.mime?.startsWith('audio/')) {

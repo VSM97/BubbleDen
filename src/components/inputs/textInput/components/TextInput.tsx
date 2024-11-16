@@ -154,6 +154,7 @@ export const TextInput = (props: Props) => {
                   ? props.uploadsConfig?.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',')
                   : '*'
               }
+              placeholder={props.placeholder ?? 'Upload an image'}
             />
           </>
         ) : null}
@@ -175,6 +176,7 @@ export const TextInput = (props: Props) => {
               type="file"
               onChange={handleFileChange}
               accept={getFileType()}
+              placeholder={props.placeholder ?? 'Upload a file'}
             />
           </>
         ) : null}

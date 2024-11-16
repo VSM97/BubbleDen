@@ -50,6 +50,7 @@ const FeedbackContentDialog = (props: FeedbackContentDialogProps) => {
                 class="p-1 ml-auto bg-transparent border-0 text-black float-right text-xl leading-none font-semibold outline-none focus:outline-none"
                 type="button"
                 onClick={onClose}
+                title="Close"
               >
                 <span class="bg-transparent block outline-none focus:outline-none">
                   <svg

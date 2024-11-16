@@ -33,23 +33,42 @@ type Props = {
   handleSourceDocumentsClick: (src: any) => void;
 };
 
-const defaultBackgroundColor = '#f7f8ff';
-const defaultTextColor = '#303235';
-const defaultFontSize = 16;
 const defaultFeedbackColor = '#3B81F6';
+
+// Create a new component to handle the source bubble reactivity
+const SourceBubbleWrapper = (props: { src: any; URL: URL | undefined; handleSourceDocumentsClick: (src: any) => void }) => {
+  const handleClick = () => {
+    if (props.URL) {
+      window.open(props.src.metadata.source, '_blank');
+    } else {
+      props.handleSourceDocumentsClick(props.src);
+    }
+  };
+
+  return (
+    <SourceBubble pageContent={props.URL ? props.URL.pathname : props.src.pageContent} metadata={props.src.metadata} onSourceClick={handleClick} />
+  );
+};
 
 export const BotBubble = (props: Props) => {
   let botMessageEl: HTMLDivElement | undefined;
   let botDetailsEl: HTMLDetailsElement | undefined;
 
-  Marked.setOptions({ isNoP: true, sanitize: props.renderHTML !== undefined ? !props.renderHTML : true });
+  createEffect(() => {
+    Marked.setOptions({ isNoP: true, sanitize: props.renderHTML !== undefined ? !props.renderHTML : true });
+  });
 
   const [rating, setRating] = createSignal('');
   const [feedbackId, setFeedbackId] = createSignal('');
   const [showFeedbackContentDialog, setShowFeedbackContentModal] = createSignal(false);
   const [copiedMessage, setCopiedMessage] = createSignal(false);
-  const [thumbsUpColor, setThumbsUpColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
-  const [thumbsDownColor, setThumbsDownColor] = createSignal(props.feedbackColor ?? defaultFeedbackColor); // default color
+  const [thumbsUpColor, setThumbsUpColor] = createSignal('');
+  const [thumbsDownColor, setThumbsDownColor] = createSignal('');
+
+  createEffect(() => {
+    setThumbsUpColor(props.feedbackColor ?? defaultFeedbackColor);
+    setThumbsDownColor(props.feedbackColor ?? defaultFeedbackColor);
+  });
 
   const downloadFile = async (fileAnnotation: any) => {
     try {
@@ -247,26 +266,33 @@ export const BotBubble = (props: Props) => {
 
   const renderArtifacts = (item: Partial<FileUpload>) => {
     return (
-      <Show when={item.type === 'png' || item.type === 'jpeg'} fallback={
-        <Show when={item.type === 'html'} fallback={
-          <span
-            innerHTML={Marked.parse(item.data as string)}
-            class="prose"
-            style={{
-              'background-color': props.backgroundColor ?? defaultBackgroundColor,
-              color: props.textColor ?? defaultTextColor,
-              'border-radius': '6px',
-              'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
-            }}
-          />
-        }>
-          <div class="mt-2">
-            <div innerHTML={item.data as string} />
-          </div>
-        </Show>
-      }>
+      <Show
+        when={item.type === 'png' || item.type === 'jpeg'}
+        fallback={
+          <Show
+            when={item.type === 'html'}
+            fallback={
+              <span
+                innerHTML={Marked.parse(item.data as string)}
+                class="prose"
+                classList={{
+                  'bg-[props.backgroundColor]': !props.backgroundColor,
+                  'text-[props.textColor]': !props.textColor,
+                  'rounded-[6px]': true,
+                  'text-[props.fontSize]': !props.fontSize,
+                  'text-[defaultFontSize]': !props.fontSize,
+                }}
+              />
+            }
+          >
+            <div class="mt-2">
+              <div innerHTML={item.data as string} />
+            </div>
+          </Show>
+        }
+      >
         <div class="flex items-center justify-center max-w-[128px] mr-[10px] p-0 m-0">
-          <img class="w-full h-full bg-cover" src={item.data as string} />
+          <img class="w-full h-full bg-cover" src={item.data as string} alt={`Preview of ${item.name}`} />
         </div>
       </Show>
     );
@@ -317,7 +343,7 @@ export const BotBubble = (props: Props) => {
 
   return (
     <div>
-      <div class="flex flex-row justify-start mb-2 items-start host-container" style={{ 'margin-right': '50px' }}>
+      <div class="flex flex-row justify-start mb-2 items-start host-container mr-[50px]">
         <Show when={props.showAvatar}>
           <Avatar initialAvatarSrc={props.avatarSrc} />
         </Show>
@@ -364,13 +390,14 @@ export const BotBubble = (props: Props) => {
             <span
               ref={botMessageEl}
               class="px-4 py-2 ml-2 max-w-full chatbot-host-bubble prose"
-              data-testid="host-bubble"
-              style={{
-                'background-color': props.backgroundColor ?? defaultBackgroundColor,
-                color: props.textColor ?? defaultTextColor,
-                'border-radius': '6px',
-                'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+              classList={{
+                'bg-[props.backgroundColor]': !props.backgroundColor,
+                'text-[props.textColor]': !props.textColor,
+                'rounded-[6px]': true,
+                'text-[props.fontSize]': !props.fontSize,
+                'text-[defaultFontSize]': !props.fontSize,
               }}
+              data-testid="host-bubble"
             />
           )}
           {props.message.action && (
@@ -416,23 +443,11 @@ export const BotBubble = (props: Props) => {
             <Show when={props.sourceDocsTitle}>
               <span class="px-2 py-[10px] font-semibold">{props.sourceDocsTitle}</span>
             </Show>
-            <div style={{ display: 'flex', 'flex-direction': 'row', width: '100%', 'flex-wrap': 'wrap' }}>
+            <div class="flex flex-row w-full flex-wrap">
               <For each={[...removeDuplicateURL(props.message)]}>
                 {(src) => {
                   const URL = isValidURL(src.metadata.source);
-                  return (
-                    <SourceBubble
-                      pageContent={URL ? URL.pathname : src.pageContent}
-                      metadata={src.metadata}
-                      onSourceClick={() => {
-                        if (URL) {
-                          window.open(src.metadata.source, '_blank');
-                        } else {
-                          props.handleSourceDocumentsClick(src);
-                        }
-                      }}
-                    />
-                  );
+                  return <SourceBubbleWrapper src={src} URL={URL} handleSourceDocumentsClick={props.handleSourceDocumentsClick} />;
                 }}
               </For>
             </div>
@@ -445,7 +460,7 @@ export const BotBubble = (props: Props) => {
             <div class={`flex items-center px-2 pb-2 ${props.showAvatar ? 'ml-10' : ''}`}>
               <CopyToClipboardButton feedbackColor={props.feedbackColor} onClick={() => copyMessageToClipboard()} />
               <Show when={copiedMessage()}>
-                <div class="copied-message" style={{ color: props.feedbackColor ?? defaultFeedbackColor }}>
+                <div class="copied-message" classList={{ [`text-[${props.feedbackColor ?? defaultFeedbackColor}]`]: true }}>
                   Copied!
                 </div>
               </Show>
