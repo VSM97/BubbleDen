@@ -1,7 +1,8 @@
-import { For, onMount } from 'solid-js';
+import { For, onMount, Show } from 'solid-js';
 import { Marked } from '@ts-stack/markdown';
 import { FileUpload } from '../Bot';
 import { cloneDeep } from 'lodash';
+import { Image, Span } from '@nextui-org/react';
 
 type Props = {
   apiHost?: string;
@@ -49,35 +50,30 @@ export const AgentReasoningBubble = (props: Props) => {
   };
 
   const renderArtifacts = (item: Partial<FileUpload>) => {
-    if (item.type === 'png' || item.type === 'jpeg') {
-      const src = item.data as string;
-      return (
+    return (
+      <Show when={item.type === 'png' || item.type === 'jpeg'} fallback={
+        <Show when={item.type === 'html'} fallback={
+          <Span
+            innerHTML={Marked.parse(item.data as string)}
+            class="prose"
+            style={{
+              'background-color': props.backgroundColor ?? defaultBackgroundColor,
+              color: props.textColor ?? defaultTextColor,
+              'border-radius': '6px',
+              'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+            }}
+          />
+        }>
+          <div class="mt-2">
+            <div innerHTML={item.data as string} />
+          </div>
+        </Show>
+      }>
         <div class="flex items-center justify-center max-w-[128px] mr-[10px] p-0 m-0">
-          <img class="w-full h-full bg-cover" src={src} />
+          <Image class="w-full h-full bg-cover" src={item.data as string} />
         </div>
-      );
-    } else if (item.type === 'html') {
-      const src = item.data as string;
-      return (
-        <div class="mt-2">
-          <div innerHTML={src} />
-        </div>
-      );
-    } else {
-      const src = item.data as string;
-      return (
-        <span
-          innerHTML={Marked.parse(src)}
-          class="prose"
-          style={{
-            'background-color': props.backgroundColor ?? defaultBackgroundColor,
-            color: props.textColor ?? defaultTextColor,
-            'border-radius': '6px',
-            'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
-          }}
-        />
-      );
-    }
+      </Show>
+    );
   };
 
   return (
@@ -92,7 +88,7 @@ export const AgentReasoningBubble = (props: Props) => {
         </div>
       )}
       {props.agentMessage && (
-        <span
+        <Span
           ref={botMessageEl}
           class="prose"
           style={{

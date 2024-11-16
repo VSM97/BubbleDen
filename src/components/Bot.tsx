@@ -1,4 +1,4 @@
-import { createSignal, createEffect, For, onMount, Show, mergeProps, on, createMemo } from 'solid-js';
+import { createSignal, createEffect, For, onMount, Show, mergeProps, on, createMemo, onCleanup } from 'solid-js';
 import { v4 as uuidv4 } from 'uuid';
 import {
   sendMessageQuery,
@@ -36,6 +36,7 @@ import { removeLocalStorageChatHistory, getLocalStorageChatflow, setLocalStorage
 import { cloneDeep } from 'lodash';
 import { FollowUpPromptBubble } from '@/components/bubbles/FollowUpPromptBubble';
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
+import { Button } from '@nextui-org/react';
 
 export type FileEvent<T = EventTarget> = {
   target: T;
@@ -243,9 +244,6 @@ const defaultWelcomeMessage = 'Hi there! How can I help?';
     },
 ]*/
 
-const defaultBackgroundColor = '#ffffff';
-const defaultTextColor = '#303235';
-
 export const Bot = (botProps: BotProps & { class?: string }) => {
   // set a default value for showTitle if not set and merge with other props
   const props = mergeProps({ showTitle: true }, botProps);
@@ -268,10 +266,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   );
 
   const [isChatFlowAvailableToStream, setIsChatFlowAvailableToStream] = createSignal(false);
-  const [chatId, setChatId] = createSignal(
-    (props.chatflowConfig?.vars as any)?.customerId ? `${(props.chatflowConfig?.vars as any).customerId.toString()}+${uuidv4()}` : uuidv4(),
+  const initialChatId = createMemo(() =>
+    (props.chatflowConfig?.vars as any)?.customerId
+      ? `${(props.chatflowConfig?.vars as any).customerId.toString()}+${uuidv4()}`
+      : uuidv4()
   );
-  const [isMessageStopping, setIsMessageStopping] = createSignal(false);
+  const [chatId, setChatId] = createSignal('');
   const [starterPrompts, setStarterPrompts] = createSignal<string[]>([], { equals: false });
   const [chatFeedbackStatus, setChatFeedbackStatus] = createSignal<boolean>(false);
   const [fullFileUpload, setFullFileUpload] = createSignal<boolean>(false);
@@ -282,7 +282,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [disclaimerPopupOpen, setDisclaimerPopupOpen] = createSignal(false);
 
   // drag & drop file input
-  // TODO: fix this type
   const [previews, setPreviews] = createSignal<FilePreview[]>([]);
 
   // audio recording
@@ -630,7 +629,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   };
 
   const abortMessage = () => {
-    setIsMessageStopping(false);
     setMessages((prevMessages) => {
       const allMessages = [...cloneDeep(prevMessages)];
       if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
@@ -893,13 +891,13 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     }
   };
 
-  onMount(() => {
+  createEffect(() => {
     if (props.clearChatOnReload) {
       clearChat();
       window.addEventListener('beforeunload', clearChat);
-      return () => {
+      onCleanup(() => {
         window.removeEventListener('beforeunload', clearChat);
-      };
+      });
     }
   });
 
@@ -958,22 +956,22 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       const loadedMessages: MessageType[] =
         chatMessage?.chatHistory?.length > 0
           ? chatMessage.chatHistory?.map((message: MessageType) => {
-              const chatHistory: MessageType = {
-                messageId: message?.messageId,
-                message: message.message,
-                type: message.type,
-                rating: message.rating,
-                dateTime: message.dateTime,
-              };
-              if (message.sourceDocuments) chatHistory.sourceDocuments = message.sourceDocuments;
-              if (message.fileAnnotations) chatHistory.fileAnnotations = message.fileAnnotations;
-              if (message.fileUploads) chatHistory.fileUploads = message.fileUploads;
-              if (message.agentReasoning) chatHistory.agentReasoning = message.agentReasoning;
-              if (message.action) chatHistory.action = message.action;
-              if (message.artifacts) chatHistory.artifacts = message.artifacts;
-              if (message.followUpPrompts) chatHistory.followUpPrompts = message.followUpPrompts;
-              return chatHistory;
-            })
+            const chatHistory: MessageType = {
+              messageId: message?.messageId,
+              message: message.message,
+              type: message.type,
+              rating: message.rating,
+              dateTime: message.dateTime,
+            };
+            if (message.sourceDocuments) chatHistory.sourceDocuments = message.sourceDocuments;
+            if (message.fileAnnotations) chatHistory.fileAnnotations = message.fileAnnotations;
+            if (message.fileUploads) chatHistory.fileUploads = message.fileUploads;
+            if (message.agentReasoning) chatHistory.agentReasoning = message.agentReasoning;
+            if (message.action) chatHistory.action = message.action;
+            if (message.artifacts) chatHistory.artifacts = message.artifacts;
+            if (message.followUpPrompts) chatHistory.followUpPrompts = message.followUpPrompts;
+            return chatHistory;
+          })
           : [{ message: props.welcomeMessage ?? defaultWelcomeMessage, type: 'apiMessage' }];
 
       const filteredMessages = loadedMessages.filter((message) => message.type !== 'leadCaptureMessage');
@@ -1321,36 +1319,44 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   );
 
   const previewDisplay = (item: FilePreview) => {
-    if (item.mime.startsWith('image/')) {
-      return (
-        <button
+    const isInputDisabled = getInputDisabled();
+    const onDelete = () => handleDeletePreview(item);
+
+    return (
+      <Show when={item.mime.startsWith('image/')} fallback={
+        <Show when={item.mime.startsWith('audio/')} fallback={
+          <FilePreview disabled={isInputDisabled} item={item} onDelete={onDelete} />
+        }>
+          <div
+            class={`inline-flex basis-auto flex-grow-0 flex-shrink-0 justify-between items-center rounded-xl h-12 p-1 mr-1 bg-gray-500 ${chatContainer ? (botProps.isFullPage ? 'w-1/4' : 'w-1/2') : 'w-[200px]'}`}
+          >
+            <audio class="block bg-cover bg-center w-full h-full rounded-none text-transparent" controls src={item.data as string} />
+            <Button class="w-7 h-7 flex items-center justify-center bg-transparent p-1" onClick={onDelete}>
+              <TrashIcon color="white" />
+            </Button>
+          </div>
+        </Show>
+      }>
+        <Button
           class="group w-12 h-12 flex items-center justify-center relative rounded-[10px] overflow-hidden transition-colors duration-200"
-          onClick={() => handleDeletePreview(item)}
+          onClick={onDelete}
         >
-          <img class="w-full h-full bg-cover" src={item.data as string} />
+          <img
+            class="w-full h-full bg-cover"
+            src={item.data as string}
+            alt={`Preview of ${item.name}`}
+          />
           <span class="absolute hidden group-hover:flex items-center justify-center z-10 w-full h-full top-0 left-0 bg-black/10 rounded-[10px] transition-colors duration-200">
             <TrashIcon />
           </span>
-        </button>
-      );
-    } else if (item.mime.startsWith('audio/')) {
-      return (
-        <div
-          class={`inline-flex basis-auto flex-grow-0 flex-shrink-0 justify-between items-center rounded-xl h-12 p-1 mr-1 bg-gray-500`}
-          style={{
-            width: `${chatContainer ? (botProps.isFullPage ? chatContainer?.offsetWidth / 4 : chatContainer?.offsetWidth / 2) : '200'}px`,
-          }}
-        >
-          <audio class="block bg-cover bg-center w-full h-full rounded-none text-transparent" controls src={item.data as string} />
-          <button class="w-7 h-7 flex items-center justify-center bg-transparent p-1" onClick={() => handleDeletePreview(item)}>
-            <TrashIcon color="white" />
-          </button>
-        </div>
-      );
-    } else {
-      return <FilePreview disabled={getInputDisabled()} item={item} onDelete={() => handleDeletePreview(item)} />;
-    }
+        </Button>
+      </Show>
+    );
   };
+
+  createEffect(() => {
+    setChatId(initialChatId());
+  });
 
   return (
     <>
@@ -1371,8 +1377,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         )}
         {isDragActive() && (uploadsConfig()?.isImageUploadAllowed || isFileUploadAllowed()) && (
           <div
-            class="absolute top-0 left-0 bottom-0 right-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white z-40 gap-2 border-2 border-dashed"
-            style={{ 'border-color': props.bubbleBackgroundColor }}
+            class={`absolute top-0 left-0 bottom-0 right-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm text-white z-40 gap-2 border-2 border-dashed border-[${props.bubbleBackgroundColor}]`}
           >
             <h2 class="text-xl font-semibold">Drop here to upload</h2>
             <For each={[...(uploadsConfig()?.imgUploadSizeAndTypes || []), ...(uploadsConfig()?.fileUploadSizeAndTypes || [])]}>
@@ -1390,24 +1395,21 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
         {props.showTitle ? (
           <div
-            class="flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10"
-            style={{
-              background: props.bubbleBackgroundColor,
-              color: props.bubbleTextColor,
-              'border-top-left-radius': props.isFullPage ? '0px' : '6px',
-              'border-top-right-radius': props.isFullPage ? '0px' : '6px',
-            }}
+            class={`flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10 
+              ${props.isFullPage ? 'rounded-none' : 'rounded-t-[6px]'}
+              bg-[${props.bubbleBackgroundColor}] text-[${props.bubbleTextColor}]
+            `}
           >
             <Show when={props.titleAvatarSrc}>
               <>
-                <div style={{ width: '15px' }} />
+                <div class="w-[15px]" />
                 <Avatar initialAvatarSrc={props.titleAvatarSrc} />
               </>
             </Show>
             <Show when={props.title}>
               <span class="px-3 whitespace-pre-wrap font-semibold max-w-full">{props.title}</span>
             </Show>
-            <div style={{ flex: 1 }} />
+            <div class="flex-1" />
             <DeleteButton
               sendButtonColor={props.bubbleTextColor}
               type="button"
@@ -1415,7 +1417,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               class="my-2 ml-2"
               on:click={clearChat}
             >
-              <span style={{ 'font-family': 'Poppins, sans-serif' }}>Clear</span>
+              <span class="font-['Poppins']">Clear</span>
             </DeleteButton>
           </div>
         ) : null}
@@ -1458,7 +1460,11 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                         fontSize={props.fontSize}
                         isLoading={loading() && index() === messages().length - 1}
                         showAgentMessages={props.showAgentMessages}
-                        handleActionClick={(label, action) => handleActionClick(label, action)}
+                        handleActionClick={(label: string, action: IAction | null | undefined) => {
+                          createEffect(() => {
+                            handleActionClick(label, action);
+                          });
+                        }}
                         sourceDocsTitle={props.sourceDocsTitle}
                         handleSourceDocumentsClick={(sourceDocuments) => {
                           setSourcePopupSrc(sourceDocuments);
@@ -1517,7 +1523,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 </div>
                 <div class="w-full flex flex-row flex-wrap px-5 py-[10px] gap-2">
                   <For each={[...followUpPrompts()]}>
-                    {(prompt, index) => (
+                    {(prompt) => (
                       <FollowUpPromptBubble
                         prompt={prompt}
                         onPromptClick={() => followUpPromptClick(prompt)}
@@ -1552,13 +1558,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   </div>
                 ) : (
                   <div
-                    class="h-[58px] flex items-center justify-between chatbot-input border border-[#eeeeee]"
+                    class={`h-[58px] flex items-center justify-between chatbot-input border border-[#eeeeee] m-auto ${props.textInput?.backgroundColor ? `bg-[${props.textInput.backgroundColor}]` : 'bg-white'
+                      } ${props.textInput?.textColor ? `text-[${props.textInput.textColor}]` : 'text-[#303235]'}`}
                     data-testid="input"
-                    style={{
-                      margin: 'auto',
-                      'background-color': props.textInput?.backgroundColor ?? defaultBackgroundColor,
-                      color: props.textInput?.textColor ?? defaultTextColor,
-                    }}
                   >
                     <div class="flex items-center gap-3 px-4 py-2">
                       <span>
@@ -1569,7 +1571,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                     </div>
                     <div class="flex items-center">
                       <CancelButton buttonColor={props.textInput?.sendButtonColor} type="button" class="m-0" on:click={onRecordingCancelled}>
-                        <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
+                        <span class="font-['Poppins']">Send</span>
                       </CancelButton>
                       <SendButton
                         sendButtonColor={props.textInput?.sendButtonColor}
@@ -1578,7 +1580,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                         class="m-0"
                         on:click={onRecordingStopped}
                       >
-                        <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
+                        <span class="font-['Poppins']">Send</span>
                       </SendButton>
                     </div>
                   </div>

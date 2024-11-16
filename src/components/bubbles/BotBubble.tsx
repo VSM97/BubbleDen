@@ -247,28 +247,8 @@ export const BotBubble = (props: Props) => {
 
   const renderArtifacts = (item: Partial<FileUpload>) => {
     return (
-      <>
-        <Show when={item.type === 'png' || item.type === 'jpeg'}>
-          <div class="flex items-center justify-center p-0 m-0">
-            <img
-              class="w-full h-full bg-cover"
-              src={(() => {
-                const isFileStorage = typeof item.data === 'string' && item.data.startsWith('FILE-STORAGE::');
-                return isFileStorage
-                  ? `${props.apiHost}/api/v1/get-upload-file?chatflowId=${props.chatflowid}&chatId=${props.chatId}&fileName=${(
-                      item.data as string
-                    ).replace('FILE-STORAGE::', '')}`
-                  : (item.data as string);
-              })()}
-            />
-          </div>
-        </Show>
-        <Show when={item.type === 'html'}>
-          <div class="mt-2">
-            <div innerHTML={item.data as string} />
-          </div>
-        </Show>
-        <Show when={item.type !== 'png' && item.type !== 'jpeg' && item.type !== 'html'}>
+      <Show when={item.type === 'png' || item.type === 'jpeg'} fallback={
+        <Show when={item.type === 'html'} fallback={
           <span
             innerHTML={Marked.parse(item.data as string)}
             class="prose"
@@ -279,8 +259,16 @@ export const BotBubble = (props: Props) => {
               'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
             }}
           />
+        }>
+          <div class="mt-2">
+            <div innerHTML={item.data as string} />
+          </div>
         </Show>
-      </>
+      }>
+        <div class="flex items-center justify-center max-w-[128px] mr-[10px] p-0 m-0">
+          <img class="w-full h-full bg-cover" src={item.data as string} />
+        </div>
+      </Show>
     );
   };
 
