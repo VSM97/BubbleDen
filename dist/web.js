@@ -8359,18 +8359,18 @@ var dt = '#f7f8ff',
                                           d = null !== (l = e.textColor) && void 0 !== l ? l : st,
                                           s = e.fontSize ? ''.concat(e.fontSize, 'px') : ''.concat(16, 'px');
                                         return (
-                                          n !== t._v$ && (o.innerHTML = t._v$ = n),
-                                          i !== t._v$2 &&
-                                            (null != (t._v$2 = i)
+                                          n !== t._v$3 && (o.innerHTML = t._v$3 = n),
+                                          i !== t._v$4 &&
+                                            (null != (t._v$4 = i)
                                               ? o.style.setProperty('background-color', i)
                                               : o.style.removeProperty('background-color')),
-                                          d !== t._v$3 && (null != (t._v$3 = d) ? o.style.setProperty('color', d) : o.style.removeProperty('color')),
-                                          s !== t._v$4 &&
-                                            (null != (t._v$4 = s) ? o.style.setProperty('font-size', s) : o.style.removeProperty('font-size')),
+                                          d !== t._v$5 && (null != (t._v$5 = d) ? o.style.setProperty('color', d) : o.style.removeProperty('color')),
+                                          s !== t._v$6 &&
+                                            (null != (t._v$6 = s) ? o.style.setProperty('font-size', s) : o.style.removeProperty('font-size')),
                                           t
                                         );
                                       },
-                                      { _v$: void 0, _v$2: void 0, _v$3: void 0, _v$4: void 0 },
+                                      { _v$3: void 0, _v$4: void 0, _v$5: void 0, _v$6: void 0 },
                                     ),
                                     o
                                   );
@@ -8392,9 +8392,14 @@ var dt = '#f7f8ff',
                               var e = tt(),
                                 o = e.firstChild;
                               return (
-                                P(function () {
-                                  return ie(o, 'src', r.data);
-                                }),
+                                P(
+                                  function (e) {
+                                    var t = r.data,
+                                      a = 'Preview of '.concat(r.name);
+                                    return t !== e._v$ && ie(o, 'src', (e._v$ = t)), a !== e._v$2 && ie(o, 'alt', (e._v$2 = a)), e;
+                                  },
+                                  { _v$: void 0, _v$2: void 0 },
+                                ),
                                 e
                               );
                             },
@@ -8429,13 +8434,13 @@ var dt = '#f7f8ff',
                   n = null !== (a = e.textColor) && void 0 !== a ? a : st,
                   i = e.fontSize ? ''.concat(e.fontSize, 'px') : ''.concat(16, 'px');
                 return (
-                  l !== r._v$5 && (null != (r._v$5 = l) ? o.style.setProperty('background-color', l) : o.style.removeProperty('background-color')),
-                  n !== r._v$6 && (null != (r._v$6 = n) ? o.style.setProperty('color', n) : o.style.removeProperty('color')),
-                  i !== r._v$7 && (null != (r._v$7 = i) ? o.style.setProperty('font-size', i) : o.style.removeProperty('font-size')),
+                  l !== r._v$7 && (null != (r._v$7 = l) ? o.style.setProperty('background-color', l) : o.style.removeProperty('background-color')),
+                  n !== r._v$8 && (null != (r._v$8 = n) ? o.style.setProperty('color', n) : o.style.removeProperty('color')),
+                  i !== r._v$9 && (null != (r._v$9 = i) ? o.style.setProperty('font-size', i) : o.style.removeProperty('font-size')),
                   r
                 );
               },
-              { _v$5: void 0, _v$6: void 0, _v$7: void 0 },
+              { _v$7: void 0, _v$8: void 0, _v$9: void 0 },
             ),
             o)
           );
@@ -28282,7 +28287,7 @@ const ys = le(
     '<button class="group w-12 h-12 flex items-center justify-center relative rounded-[10px] overflow-hidden transition-colors duration-200"><img class="w-full h-full bg-cover"><span class="absolute hidden group-hover:flex items-center justify-center z-10 w-full h-full top-0 left-0 bg-black/10 rounded-[10px] transition-colors duration-200">',
   ),
   ws = le(
-    '<div><audio class="block bg-cover bg-center w-full h-full rounded-none text-transparent" controls></audio><button class="w-7 h-7 flex items-center justify-center bg-transparent p-1">',
+    '<div><audio class="block bg-cover bg-center w-full h-full rounded-none text-transparent" controls></audio><button class="w-7 h-7 flex items-center justify-center bg-transparent p-1" title="Delete">',
   ),
   Gs = le('<div class="w-full flex flex-row flex-wrap px-5 py-[10px] gap-2">'),
   Ls = le('<div class="flex items-center gap-1 px-5"><span class="text-sm text-gray-700">Try these prompts'),
