@@ -8,8 +8,8 @@ import tailwindcss from 'tailwindcss';
 import typescript from '@rollup/plugin-typescript';
 import { typescriptPaths } from 'rollup-plugin-typescript-paths';
 import commonjs from '@rollup/plugin-commonjs';
-import serve from "rollup-plugin-serve";
-import livereload from "rollup-plugin-livereload";
+import serve from 'rollup-plugin-serve';
+import livereload from 'rollup-plugin-livereload';
 
 const extensions = ['.ts', '.tsx'];
 
@@ -35,18 +35,18 @@ const indexConfig = {
     }),
     typescript(),
     typescriptPaths({ preserveExtensions: true }),
-    terser({ 
+    terser({
       output: { comments: false },
-      compress: true
+      compress: true,
     }),
     serve({
       contentBase: 'dist',
       host: 'localhost',
       port: 5678,
       open: true,
-      verbose: true
+      verbose: true,
     }),
-    livereload({ watch: "dist" }),
+    livereload({ watch: 'dist' }),
   ],
 };
 
