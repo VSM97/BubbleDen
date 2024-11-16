@@ -28,8 +28,8 @@ export const SendButton = (props: SendButtonProps) => {
   );
 };
 export const DeleteButton = (props: SendButtonProps) => {
-  // Check if <flowise-fullchatbot> is present in the DOM
-  const isFullChatbot = document.querySelector('flowise-fullchatbot') !== null;
+  // Check if <lionai-fullchatbot> is present in the DOM
+  const isFullChatbot = document.querySelector('lionai-fullchatbot') !== null;
   const paddingClass = isFullChatbot ? 'px-4' : 'px-12';
 
   return (
