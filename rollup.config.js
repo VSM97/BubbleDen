@@ -20,8 +20,8 @@ const getPlugins = () => {
     replace({
       preventAssignment: true,
       values: {
-        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
-      }
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+      },
     }),
     resolve({ extensions, browser: true }),
     commonjs(),
@@ -61,7 +61,7 @@ const getPlugins = () => {
         open: true,
         verbose: true,
       }),
-      livereload({ watch: 'dist' })
+      livereload({ watch: 'dist' }),
     );
   }
 

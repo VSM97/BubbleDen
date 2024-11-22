@@ -5,7 +5,7 @@ export type { BotProps } from './components/Bot';
 export type { BubbleProps } from './features/bubble/components/Bubble';
 
 // Theme Types
-export type { 
+export type {
   BubbleTheme,
   BubbleParams,
   TextInputTheme,
@@ -15,7 +15,7 @@ export type {
   FeedbackTheme,
   ChatWindowTheme,
   DateTimeToggleTheme,
-  DisclaimerPopUpTheme
+  DisclaimerPopUpTheme,
 } from './features/bubble/types';
 
 // Observer Types
