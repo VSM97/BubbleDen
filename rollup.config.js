@@ -10,12 +10,19 @@ import { typescriptPaths } from 'rollup-plugin-typescript-paths';
 import commonjs from '@rollup/plugin-commonjs';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
+import replace from '@rollup/plugin-replace';
 
 const extensions = ['.ts', '.tsx'];
+const isDev = process.env.NODE_ENV === 'development';
 
-const indexConfig = {
-  context: 'this',
-  plugins: [
+const getPlugins = () => {
+  const plugins = [
+    replace({
+      preventAssignment: true,
+      values: {
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
+      }
+    }),
     resolve({ extensions, browser: true }),
     commonjs(),
     json(),
@@ -33,31 +40,51 @@ const indexConfig = {
       minimize: true,
       inject: false,
     }),
-    typescript(),
+    typescript({
+      declaration: true,
+      declarationDir: 'dist',
+      rootDir: 'src',
+    }),
     typescriptPaths({ preserveExtensions: true }),
     terser({
       output: { comments: false },
       compress: true,
     }),
-    serve({
-      contentBase: 'dist',
-      host: 'localhost',
-      port: 5678,
-      open: true,
-      verbose: true,
-    }),
-    livereload({ watch: 'dist' }),
-  ],
+  ];
+
+  if (isDev) {
+    plugins.push(
+      serve({
+        contentBase: 'dist',
+        host: 'localhost',
+        port: 5678,
+        open: true,
+        verbose: true,
+      }),
+      livereload({ watch: 'dist' })
+    );
+  }
+
+  return plugins;
 };
 
 const configs = [
   {
-    ...indexConfig,
     input: './src/web.ts',
     output: {
       file: 'dist/web.js',
       format: 'es',
     },
+    plugins: getPlugins(),
+  },
+  {
+    input: './src/index.ts',
+    output: {
+      file: 'dist/index.js',
+      format: 'es',
+    },
+    external: ['solid-js', 'solid-element'],
+    plugins: getPlugins(),
   },
 ];
 

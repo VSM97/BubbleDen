@@ -33,7 +33,7 @@ export const destroy = () => {
   elementUsed?.remove();
 };
 
-type Chatbot = {
+export type Chatbot = {
   initFull: typeof initFull;
   init: typeof init;
   destroy: typeof destroy;

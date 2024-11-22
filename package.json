@@ -1,13 +1,19 @@
 {
-  "name": "flowise-embed",
-  "version": "2.0.6",
+  "name": "@lionai/bubble-den",
+  "version": "0.0.1",
   "description": "Javascript library to display flowise chatbot on your website",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "dev": "rollup --watch --config rollup.config.js",
-    "build": "rollup --config rollup.config.js",
+    "dev": "NODE_ENV=development rollup --watch --config rollup.config.js",
+    "build": "NODE_ENV=production rollup --config rollup.config.js",
     "lint": "eslint \"src/**/*.ts*\"",
     "lint-fix": "eslint --fix \"src/**/*.ts*\"",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,mdx}\"",
@@ -36,6 +42,7 @@
     "@rollup/plugin-node-resolve": "15.0.1",
     "@rollup/plugin-terser": "0.4.0",
     "@rollup/plugin-typescript": "11.0.0",
+    "@rollup/plugin-replace": "^5.0.0",
     "@tailwindcss/typography": "^0.5.10",
     "@types/lodash": "^4.14.195",
     "@types/node": "18.15.11",
@@ -54,7 +61,7 @@
     "eslint-plugin-solid": "0.12.0",
     "husky": "^8.0.0",
     "postcss": "8.4.21",
-    "react": "18.2.0",
+    "react": "^18.2.0",
     "rollup": "3.23.0",
     "rollup-plugin-livereload": "2.0.5",
     "rollup-plugin-postcss": "4.0.2",
